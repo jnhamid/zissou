@@ -23,6 +23,14 @@ const signupTextButton = document.querySelector(".signuptextbutton");
 const usernameTextField = document.getElementById("signup-username");
 const usernameLabel = document.querySelector(".username_label");
 const authButton = document.querySelector(".auth-form__button");
+const landscape = document.querySelector(".landscape");
+const dropZone = document.querySelector(".photo_search_container");
+const dropZoneFs = document.querySelector(".fs_photo_search_container");
+const overlay = document.querySelector(".full-screen-image-container");
+const fileNameEl = document.querySelector(".file-name-text");
+const ellipsistextblock = document.querySelector(".ellipsistextblock");
+const similarButton = document.querySelector(".similar-button");
+
 function addEllipsis(inputElem) {
   if (inputElem.value.endsWith("...")) {
     inputElem.value = inputElem.value.replace(/\./g, "");
@@ -80,7 +88,6 @@ window.addEventListener("resize", function () {
 });
 
 let portrait = window.matchMedia("(orientation: portrait)");
-const landscape = document.querySelector(".landscape");
 portrait.addEventListener("change", function (e) {
   if (e.matches) {
     landscape.style["display"] = "none";
@@ -89,11 +96,9 @@ portrait.addEventListener("change", function (e) {
   }
 });
 
-const dropZone = document.querySelector(".photo_search_container");
 dropZone.addEventListener("drop", dropHandler);
 dropZone.addEventListener("dragover", dragOverHandler);
 
-const dropZoneFs = document.querySelector(".fs_photo_search_container");
 dropZoneFs.addEventListener("drop", dropHandler);
 dropZoneFs.addEventListener("dragover", dragOverHandler);
 
@@ -201,8 +206,6 @@ async function openFullScreenMode(ev) {
   const path = clickedImage.attributes.getNamedItem("data-file-path").value;
   const filename = clickedImage.attributes.getNamedItem("data-file-name").value;
   const queryStr = `https://fullscreenimage-x2uakky4oa-uc.a.run.app?path=${path}`;
-  const overlay = document.querySelector(".full-screen-image-container");
-  const fileNameEl = document.querySelector(".file-name-text");
 
   fullScreenImage.loading = "eager";
   fullScreenImage.srcset = "";
@@ -230,8 +233,6 @@ async function openFullScreenMode(ev) {
 }
 
 function closeFullScreen() {
-  const body = document.querySelector(".body-3");
-  const overlay = document.querySelector(".full-screen-image-container");
   body.style["overflow"] = "auto";
   overlay.style["display"] = "none";
   document
@@ -258,65 +259,6 @@ function closeFullScreen() {
   });
 }
 
-loginTextButton.addEventListener("click", () => {
-  loginFormState = "login";
-  usernameTextField.style["display"] = "none";
-  usernameTextField.required = false;
-  usernameLabel.style["display"] = "none";
-  authButton.value = "Login";
-  loginTextButton.classList.add("active");
-  signupTextButton.classList.remove("active");
-});
-
-signupTextButton.addEventListener("click", () => {
-  loginFormState = "signup";
-  loginTextButton.classList.remove("active");
-  signupTextButton.classList.add("active");
-  usernameTextField.style["display"] = "block";
-  usernameTextField.required = true;
-  usernameLabel.style["display"] = "block";
-  authButton.value = "Sign Up";
-});
-
-window.addEventListener("scroll", async function (ev) {
-  if (document.body.getBoundingClientRect().top != -1) {
-    scrollPos = document.body.getBoundingClientRect().top;
-  }
-  clearTimeout(throttlescroll);
-  throttlescroll = setTimeout(async function () {
-    const isScrollDown = document.body.getBoundingClientRect().top <= scrollPos;
-    if (
-      isScrollDown &&
-      amountscrolled() >= 25 &&
-      !gettingMoreImages &&
-      queryHasMore
-    ) {
-      gettingMoreImages = true;
-      const ellipsistextblock = document.querySelector(".ellipsistextblock");
-      ellipsistextblock.style["display"] = "flex";
-      const ellipsis = setInterval(
-        addEllipsisInnerHtml,
-        300,
-        ellipsistextblock,
-        false
-      );
-      const searchContinue = `https://searchcontinue-x2uakky4oa-uc.a.run.app?cursor=${cursor}`;
-      const homeContinue = `https://homecontinue-x2uakky4oa-uc.a.run.app?cursor=${cursor}`;
-      const queryStr = isHomeCursor ? homeContinue : searchContinue;
-      try {
-        const res = await axios.get(queryStr);
-        cursor = res.data.cursor;
-        queryHasMore = res.data.hasMore;
-        displayThumbnails(res.data.successImages, false);
-        gettingMoreImages = false;
-        clearInterval(ellipsis);
-        ellipsistextblock.style["display"] = "none";
-      } catch (err) {
-        console.log(err);
-      }
-    }
-  }, 50);
-});
 async function getHomePagePhotos() {
   try {
     const queryStr = `https://homeimages-x2uakky4oa-uc.a.run.app`;
@@ -334,36 +276,10 @@ async function getHomePagePhotos() {
     console.error(err);
   }
 }
-async function searchImages(query) {
-  const queryStr = `https://searchimage-x2uakky4oa-uc.a.run.app?q=${query}`;
-  const input = document.querySelector(".photo_search");
-  try {
-    const res = await axios.get(queryStr);
-    cursor = res.data.cursor;
-    queryHasMore = res.data.hasMore;
-    const didDisplay = displayThumbnails(res.data.successImages);
-    if (didDisplay) {
-      isHomeCursor = false;
-      homeText.style["display"] = "flex";
-      homeTextFs.style["display"] = "flex";
-      setInterval(() => {
-        document
-          .querySelectorAll("div._2024_image_wrap")
-          .forEach((e) => (e.style["opacity"] = 1));
-      }, 200);
-    } else {
-      input.value = "";
-    }
-    input.style["color"] = "#a5a5a5";
-  } catch (err) {
-    console.error(err);
-  }
-}
 
 function displayThumbnails(images, removePrevious = true) {
   if (!images || images.length === 0) {
-    const input = document.querySelector(".photo_search");
-    input.placeholder = "Oops. Try Again!";
+    searchForm.placeholder = "Oops. Try Again!";
     return false;
   }
   if (removePrevious) {
@@ -445,7 +361,6 @@ signupTextButton.addEventListener("click", () => {
   authButton.value = "Sign Up";
 });
 
-const similarButton = document.querySelector(".similar-button");
 similarButton.addEventListener("click", async (ev) => {
   const centerImage = document.querySelector(".lightroom_photo");
   const path = centerImage.attributes.getNamedItem("data-file-path").value;
@@ -518,16 +433,15 @@ const goToHomePage = async () => {
   });
 };
 
-const filenameEl = document.querySelector(".file-name-text");
-filenameEl.addEventListener("click", async () => {
+fileNameEl.addEventListener("click", async () => {
   const filename =
     fullScreenImage.attributes.getNamedItem("data-file-name").value;
   const path = fullScreenImage.attributes.getNamedItem("data-file-path").value;
-  if (filenameEl.textContent === "Like") {
+  if (fileNameEl.textContent === "Like") {
     navigator.clipboard.writeText(filename);
-    filenameEl.textContent = "Yay!";
+    fileNameEl.textContent = "Yay!";
     setTimeout(() => {
-      filenameEl.textContent = "Liked";
+      fileNameEl.textContent = "Liked";
     }, 1000);
     await axios.post("https://like-x2uakky4oa-uc.a.run.app", {
       data: {
@@ -538,9 +452,9 @@ filenameEl.addEventListener("click", async () => {
       },
     });
   } else {
-    filenameEl.textContent = "Unliked";
+    fileNameEl.textContent = "Unliked";
     setTimeout(() => {
-      filenameEl.textContent = "Like";
+      fileNameEl.textContent = "Like";
     }, 1000);
     await axios.post("https://unlike-x2uakky4oa-uc.a.run.app", {
       data: {
@@ -633,26 +547,8 @@ window.addEventListener("scroll", async function (ev) {
     }
   }, 50);
 });
-async function getHomePagePhotos() {
-  try {
-    const queryStr = `https://homeimages-x2uakky4oa-uc.a.run.app`;
-    const res = await axios.get(queryStr);
-    cursor = res.data.cursor;
-    queryHasMore = res.data.hasMore;
-    displayThumbnails(res.data.successImages);
-    setInterval(() => {
-      document
-        .querySelectorAll("div._2024_image_wrap")
-        .forEach((e) => (e.style["opacity"] = 1));
-    }, 200);
-    homePhotos = res.data;
-  } catch (err) {
-    console.error(err);
-  }
-}
 async function searchImages(query) {
   const queryStr = `https://searchimage-x2uakky4oa-uc.a.run.app?q=${query}`;
-  const input = document.querySelector(".photo_search");
   try {
     const res = await axios.get(queryStr);
     cursor = res.data.cursor;
@@ -668,40 +564,10 @@ async function searchImages(query) {
           .forEach((e) => (e.style["opacity"] = 1));
       }, 200);
     } else {
-      input.value = "";
+      searchForm.value = "";
     }
-    input.style["color"] = "#a5a5a5";
+    searchForm.style["color"] = "#a5a5a5";
   } catch (err) {
     console.error(err);
   }
-}
-
-function displayThumbnails(images, removePrevious = true) {
-  if (!images || images.length === 0) {
-    const input = document.querySelector(".photo_search");
-    input.placeholder = "Oops. Try Again!";
-    return false;
-  }
-  if (removePrevious) {
-    document.querySelectorAll("div._2024_image_wrap").forEach((e) => {
-      e.removeEventListener("click", openFullScreenMode);
-      e.remove();
-    });
-  }
-  const parentWrapper = document.querySelector("div._2024_masonary_container");
-  for (let image of images) {
-    const wrapperElem = document.createElement("div");
-    wrapperElem.classList.add("_2024_image_wrap");
-    const imgElem = document.createElement("img");
-    imgElem.addEventListener("click", openFullScreenMode);
-    imgElem.classList.add("_2024_book_image");
-    imgElem.srcSet = getImageString(image.thumbnail);
-    imgElem.src = getImageString(image.thumbnail);
-    imgElem.setAttribute("data-file-name", image.filename);
-    imgElem.setAttribute("data-file-path", image.path);
-    wrapperElem.appendChild(imgElem);
-    wrapperElem.style["opacity"] = 0;
-    parentWrapper.appendChild(wrapperElem);
-  }
-  return true;
 }
